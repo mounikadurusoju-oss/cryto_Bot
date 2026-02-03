@@ -1,8 +1,9 @@
-"""Order placement logic for Binance Futures."""
+"""Order placement logic for Binance Testnet."""
 from typing import Any, Dict, Optional
 
 from binance.client import Client
 from binance.exceptions import BinanceAPIException, BinanceOrderException
+from binance.enums import SIDE_BUY, SIDE_SELL, ORDER_TYPE_MARKET, ORDER_TYPE_LIMIT, TIME_IN_FORCE_GTC
 import requests
 
 from .logging_config import get_logger
@@ -23,7 +24,7 @@ def place_order(
     quantity: float,
     price: Optional[float] = None,
 ) -> Dict[str, Any]:
-    """Place an order on Binance Futures Testnet.
+    """Place an order on Binance Testnet.
 
     Args:
         client: An authenticated Binance Client instance.
@@ -52,19 +53,29 @@ def place_order(
 
     if order_type == "LIMIT":
         params["price"] = price
-        params["timeInForce"] = "GTC"
+        params["timeInForce"] = TIME_IN_FORCE_GTC
 
     logger.info(f"Placing order: {params}")
 
     try:
-        response = client.futures_create_order(**params)
+        response = client.create_order(**params)
         logger.info(f"Order response: {response}")
+
+        # Calculate average price from fills if available
+        avg_price = "N/A"
+        if response.get("fills"):
+            total_qty = sum(float(f["qty"]) for f in response["fills"])
+            total_value = sum(float(f["qty"]) * float(f["price"]) for f in response["fills"])
+            if total_qty > 0:
+                avg_price = str(round(total_value / total_qty, 2))
+        elif response.get("price"):
+            avg_price = response["price"]
 
         result = {
             "orderId": response.get("orderId"),
             "status": response.get("status"),
             "executedQty": response.get("executedQty"),
-            "avgPrice": response.get("avgPrice", "N/A"),
+            "avgPrice": avg_price,
         }
 
         return result

@@ -1,4 +1,4 @@
-"""Binance Futures Testnet client wrapper."""
+"""Binance Testnet client wrapper."""
 import os
 from typing import Optional
 
@@ -17,10 +17,10 @@ class ClientError(Exception):
 
 
 def get_client() -> Client:
-    """Create and return an authenticated Binance Futures Testnet client.
+    """Create and return an authenticated Binance Testnet client.
 
     Loads API credentials from environment variables and initializes
-    the client with testnet=True.
+    the client with the Testnet base URL.
 
     Returns:
         An authenticated Binance Client instance.
@@ -40,7 +40,11 @@ def get_client() -> Client:
         )
 
     try:
-        client = Client(api_key, api_secret, testnet=True)
+        client = Client(
+            api_key,
+            api_secret,
+            testnet=True
+        )
         logger.info("Binance Testnet client initialized successfully.")
         return client
     except BinanceAPIException as e:
